@@ -20,7 +20,7 @@ st.set_page_config(
     page_title="California House Price Predictor",
     page_icon="🏠",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # --------------------------------------------------------------------------
@@ -107,25 +107,14 @@ st.markdown(
 # --------------------------------------------------------------------------
 # Sidebar — API configuration & health
 # --------------------------------------------------------------------------
+API_BASE_URL = "https://housing-fastapi-1.onrender.com"
+
 with st.sidebar:
-    st.markdown("### ⚙️ Configuration")
-    api_base_url = st.text_input(
-        "API base URL",
-        value="https://housing-fastapi-1.onrender.com",
-        help="Base URL of the running FastAPI service.",
-    ).rstrip("/")
-
-    st.caption(
-        "⏳ First request after inactivity can take 30–60s while the free-tier "
-        "backend wakes up. Please be patient on the first try."
-    )
-
-    st.markdown("---")
     st.markdown("### 📡 API Status")
 
     health_data = None
     try:
-        resp = requests.get(f"{api_base_url}/health", timeout=60)
+        resp = requests.get(f"{API_BASE_URL}/health", timeout=60)
         if resp.status_code == 200:
             health_data = resp.json()
             st.markdown(
@@ -139,20 +128,19 @@ with st.sidebar:
             )
     except requests.exceptions.RequestException:
         st.markdown(
-            '<span class="status-pill status-offline">● Offline</span>',
+            '<span class="status-pill status-offline">● Waking up / Offline</span>',
             unsafe_allow_html=True,
         )
 
     if health_data:
         st.caption(f"Model: **{health_data.get('model', 'n/a')}**")
         st.caption(f"Avg. error: **{health_data.get('avg_error', 'n/a')}**")
-        with st.expander("Model features"):
-            for f in health_data.get("features", []):
-                st.write(f"• {f}")
-    else:
-        st.caption("Start the backend with `uvicorn main:app --reload`.")
 
     st.markdown("---")
+    st.caption(
+        "⏳ First request after inactivity can take 30–60s while the "
+        "free-tier backend wakes up."
+    )
     st.caption("California Housing • RandomForestRegressor")
 
 # --------------------------------------------------------------------------
@@ -204,7 +192,7 @@ with tab_single:
         }
         try:
             with st.spinner("Contacting model... (first request after inactivity can take up to a minute)"):
-                r = requests.post(f"{api_base_url}/predict", json=payload, timeout=60)
+                r = requests.post(f"{API_BASE_URL}/predict", json=payload, timeout=60)
             if r.status_code == 200:
                 result = r.json()
                 st.markdown("")
@@ -225,7 +213,7 @@ with tab_single:
                     detail = r.text
                 st.error(f"API error ({r.status_code}): {detail}")
         except requests.exceptions.RequestException as e:
-            st.error(f"Could not reach the API at {api_base_url}. Details: {e}")
+            st.error(f"Could not reach the API at {API_BASE_URL}. Details: {e}")
 
 # --------------------------------------------------------------------------
 # Tab 2 — Batch prediction
@@ -256,7 +244,7 @@ with tab_batch:
             try:
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "text/csv")}
                 with st.spinner("Scoring file... (first request after inactivity can take up to a minute)"):
-                    r = requests.post(f"{api_base_url}/predict-file", files=files, timeout=90)
+                    r = requests.post(f"{API_BASE_URL}/predict-file", files=files, timeout=90)
 
                 if r.status_code == 200:
                     result_df = pd.read_csv(io.StringIO(r.content.decode("utf-8")))
@@ -277,7 +265,7 @@ with tab_batch:
                         detail = r.text
                     st.error(f"API error ({r.status_code}): {detail}")
             except requests.exceptions.RequestException as e:
-                st.error(f"Could not reach the API at {api_base_url}. Details: {e}")
+                st.error(f"Could not reach the API at {API_BASE_URL}. Details: {e}")
 
 # --------------------------------------------------------------------------
 # Tab 3 — About
