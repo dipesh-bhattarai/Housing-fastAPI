@@ -53,17 +53,18 @@ def predict(house: HouseFeatures):
             "AveBedrms" : house. AveBedrms,
             "Population":house. Population,
             "AveOccup" : house. AveOccup,
-            "Latitute": house. Latitude,
+            "Latitude": house. Latitude,
             "Longitude": house. Longitude
 
         }])
 
-        predicted = model.predict(input)[0]
+        input_data = input_data[features]
+        predicted = model.predict(input_data)[0]
         price_usd = predicted*100000
 
         return {
             "predicted_price": f"${price_usd:,.0f}",
-            "predicted_price_short":f"${predicted:.2f} hundred thousands",
+            "predicted_price_short": f"{predicted:.0f} hundred thousands dollors",
             "fidence_range": f"${price_usd - 39000:,.0f} to ${price_usd+ 39000:,.0f}"
         }
 
