@@ -111,16 +111,21 @@ with st.sidebar:
     st.markdown("### ⚙️ Configuration")
     api_base_url = st.text_input(
         "API base URL",
-        value="http://127.0.0.1:8000",
+        value="https://housing-fastapi-1.onrender.com",
         help="Base URL of the running FastAPI service.",
     ).rstrip("/")
+
+    st.caption(
+        "⏳ First request after inactivity can take 30–60s while the free-tier "
+        "backend wakes up. Please be patient on the first try."
+    )
 
     st.markdown("---")
     st.markdown("### 📡 API Status")
 
     health_data = None
     try:
-        resp = requests.get(f"{api_base_url}/health", timeout=3)
+        resp = requests.get(f"{api_base_url}/health", timeout=60)
         if resp.status_code == 200:
             health_data = resp.json()
             st.markdown(
@@ -198,8 +203,8 @@ with tab_single:
             "Longitude": longitude,
         }
         try:
-            with st.spinner("Contacting model..."):
-                r = requests.post(f"{api_base_url}/predict", json=payload, timeout=10)
+            with st.spinner("Contacting model... (first request after inactivity can take up to a minute)"):
+                r = requests.post(f"{api_base_url}/predict", json=payload, timeout=60)
             if r.status_code == 200:
                 result = r.json()
                 st.markdown("")
@@ -250,8 +255,8 @@ with tab_batch:
         if run_clicked:
             try:
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "text/csv")}
-                with st.spinner("Scoring file..."):
-                    r = requests.post(f"{api_base_url}/predict-file", files=files, timeout=30)
+                with st.spinner("Scoring file... (first request after inactivity can take up to a minute)"):
+                    r = requests.post(f"{api_base_url}/predict-file", files=files, timeout=90)
 
                 if r.status_code == 200:
                     result_df = pd.read_csv(io.StringIO(r.content.decode("utf-8")))
